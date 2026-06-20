@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Mvc;
 using PinSharp.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,7 +10,11 @@ builder.Services.Configure<FormOptions>(options =>
 });
 
 builder.Services.AddSingleton<BatchRenderService>();
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    // This is a private batch tool, not a public form. Avoid stale-token 400s after app restarts.
+    options.Conventions.ConfigureFilter(new IgnoreAntiforgeryTokenAttribute());
+});
 
 var app = builder.Build();
 
@@ -21,7 +26,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();

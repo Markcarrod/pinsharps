@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using PinSharp.Core.Models;
 using PinSharp.Core.Services;
+using System.Text.RegularExpressions;
 
 namespace PinSharp.Web.Pages;
 
@@ -24,7 +25,10 @@ public class IndexModel : PageModel
     public string OutputFolder { get; set; } = string.Empty;
 
     [BindProperty]
-    public string FontFilePath { get; set; } = string.Empty;
+    public string FontFolder { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string FontName { get; set; } = "random";
 
     [BindProperty]
     public IFormFile? InputFile { get; set; }
@@ -68,8 +72,8 @@ public class IndexModel : PageModel
 
         try
         {
-            var imageFolder = Path.GetFullPath(ImageFolder.Trim());
-            var outputRoot = Path.GetFullPath(OutputFolder.Trim());
+            var imageFolder = NormalizeExternalPath(ImageFolder);
+            var outputRoot = NormalizeExternalPath(OutputFolder);
             if (!Directory.Exists(imageFolder))
             {
                 throw new DirectoryNotFoundException($"Image folder not found: {imageFolder}");
@@ -94,7 +98,7 @@ public class IndexModel : PageModel
             }
 
             var imagePaths = SelectImages(imageFolder, rows.Count);
-            var fontFilePath = ResolveFontFile(FontFilePath);
+            var fontFilePath = ResolveFontFile(FontFolder, FontName);
             var format = Format.Equals("jpg", StringComparison.OrdinalIgnoreCase) ? "jpg" : "png";
             var size = PinSize.FromId(SizeId);
             var quality = Math.Clamp(JpegQuality, 1, 100);
@@ -126,7 +130,7 @@ public class IndexModel : PageModel
     private static IReadOnlyList<string> SelectImages(string folder, int requiredCount)
     {
         var selected = new List<string>(requiredCount);
-        foreach (var path in Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly))
+        foreach (var path in Directory.EnumerateFiles(folder, "*", SearchOption.AllDirectories))
         {
             if (!SupportedImageExtensions.Contains(Path.GetExtension(path)))
             {
@@ -154,20 +158,112 @@ public class IndexModel : PageModel
         return selected;
     }
 
-    private static string? ResolveFontFile(string value)
+    private static string? ResolveFontFile(string fontFolder, string fontName)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(fontFolder) && string.IsNullOrWhiteSpace(fontName))
         {
             return null;
         }
 
-        var path = Path.GetFullPath(value.Trim());
-        var extension = Path.GetExtension(path).ToLowerInvariant();
-        if (extension is not (".ttf" or ".otf" or ".ttc") || !System.IO.File.Exists(path))
+        var candidates = new List<string>();
+        var normalizedFolder = NormalizeExternalPath(fontFolder);
+        if (System.IO.File.Exists(normalizedFolder) && IsFontFile(normalizedFolder))
         {
-            throw new InvalidOperationException($"Font file not found or unsupported: {path}");
+            return normalizedFolder;
         }
 
-        return path;
+        if (Directory.Exists(normalizedFolder))
+        {
+            candidates.AddRange(Directory
+                .EnumerateFiles(normalizedFolder, "*.*", SearchOption.AllDirectories)
+                .Where(IsFontFile)
+                .OrderBy(path => path, StringComparer.OrdinalIgnoreCase));
+        }
+
+        candidates.AddRange(DefaultFontCandidates().Where(System.IO.File.Exists));
+        if (candidates.Count == 0)
+        {
+            if (string.IsNullOrWhiteSpace(fontFolder))
+            {
+                return null;
+            }
+
+            throw new InvalidOperationException($"No .ttf, .otf, or .ttc fonts were found under: {normalizedFolder}");
+        }
+
+        var requested = string.IsNullOrWhiteSpace(fontName) ? "random" : fontName.Trim();
+        if (requested.Equals("random", StringComparison.OrdinalIgnoreCase))
+        {
+            return candidates[Random.Shared.Next(candidates.Count)];
+        }
+
+        var direct = NormalizeExternalPath(requested);
+        if (System.IO.File.Exists(direct) && IsFontFile(direct))
+        {
+            return direct;
+        }
+
+        var normalizedName = NormalizeSearchText(requested);
+        var match = candidates.FirstOrDefault(path =>
+            NormalizeSearchText(Path.GetFileNameWithoutExtension(path)).Contains(normalizedName, StringComparison.OrdinalIgnoreCase) ||
+            NormalizeSearchText(Path.GetDirectoryName(path) ?? string.Empty).Contains(normalizedName, StringComparison.OrdinalIgnoreCase));
+
+        if (match is null)
+        {
+            throw new InvalidOperationException($"No font matching '{requested}' was found under: {normalizedFolder}");
+        }
+
+        return match;
+    }
+
+    private static bool IsFontFile(string path)
+    {
+        var extension = Path.GetExtension(path);
+        return extension.Equals(".ttf", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".otf", StringComparison.OrdinalIgnoreCase) ||
+               extension.Equals(".ttc", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static IEnumerable<string> DefaultFontCandidates()
+    {
+        yield return "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf";
+        yield return "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf";
+        yield return "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf";
+        yield return @"C:\Windows\Fonts\arialbd.ttf";
+        yield return @"C:\Windows\Fonts\segoeuib.ttf";
+    }
+
+    private static string NormalizeSearchText(string value) =>
+        Regex.Replace(value, "[^a-z0-9]+", string.Empty, RegexOptions.IgnoreCase).ToLowerInvariant();
+
+    private static string NormalizeExternalPath(string value)
+    {
+        var path = value.Trim();
+        if (path.Length == 0 || !OperatingSystem.IsWindows() || System.IO.File.Exists(path) || Directory.Exists(path))
+        {
+            return Path.GetFullPath(path);
+        }
+
+        var homeMatch = Regex.Match(path, @"^/home/([^/]+)/(.+)$", RegexOptions.IgnoreCase);
+        if (homeMatch.Success)
+        {
+            var windowsPath = Path.Combine(@"C:\Users", homeMatch.Groups[1].Value, homeMatch.Groups[2].Value.Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(windowsPath) || Directory.Exists(windowsPath))
+            {
+                return Path.GetFullPath(windowsPath);
+            }
+        }
+
+        var driveMatch = Regex.Match(path, @"^/mnt/([a-z])/(.+)$", RegexOptions.IgnoreCase);
+        if (driveMatch.Success)
+        {
+            var windowsPath = $"{driveMatch.Groups[1].Value.ToUpperInvariant()}:\\{driveMatch.Groups[2].Value.Replace('/', Path.DirectorySeparatorChar)}";
+            if (System.IO.File.Exists(windowsPath) || Directory.Exists(windowsPath))
+            {
+                return Path.GetFullPath(windowsPath);
+            }
+        }
+
+        return Path.GetFullPath(path);
     }
 }

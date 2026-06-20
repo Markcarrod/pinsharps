@@ -42,9 +42,15 @@
         </label>
 
         <label class="field">
-            <span>Font file <em>optional</em></span>
-            <input asp-for="FontFilePath" type="text" placeholder="/home/kayan/fonts/Montserrat-Bold.ttf" autocomplete="off" />
-            <small>Use a <code>.ttf</code>, <code>.otf</code>, or <code>.ttc</code> file. Leave blank for automatic font selection.</small>
+            <span>Font folder <em>optional</em></span>
+            <input asp-for="FontFolder" type="text" placeholder="/home/kayan/fonts" autocomplete="off" />
+            <small>Subfolders work, like <code>/home/kayan/fonts/Monse/monst.ttf</code>. You can also paste one exact font file here.</small>
+        </label>
+
+        <label class="field">
+            <span>Font name</span>
+            <input asp-for="FontName" type="text" placeholder="random or monst" autocomplete="off" />
+            <small>Use <code>random</code>, a partial font filename, or leave as automatic.</small>
         </label>
 
         <label class="field">
@@ -97,7 +103,8 @@
         <h2>What changed</h2>
         <ul>
             <li>Images are streamed from the Linux filesystem instead of uploaded through the browser.</li>
-            <li>Only enough images for the current input are selected; the list loops only when necessary.</li>
+            <li>Image folders are scanned recursively, but PinSharp stops as soon as it has enough images for the input.</li>
+            <li>Font folders are scanned recursively, so nested downloaded font packs work.</li>
             <li>Parallel rendering is controlled directly from the page.</li>
         </ul>
     </aside>
