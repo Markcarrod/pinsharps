@@ -26,7 +26,10 @@ public sealed record BatchRenderOptions(
     int JpegQuality,
     int ThreadCount,
     string? FontFilePath = null,
-    bool CreateZip = false);
+    bool CreateZip = false,
+    Action<BatchProgress>? Progress = null);
+
+public sealed record BatchProgress(int Completed, int Total, string Code, string FileName, bool Success, string? ErrorMessage = null);
 
 public sealed record RenderedPinResult(string Title, string Code, string FileName, string RelativePath, LayoutKind Layout);
 

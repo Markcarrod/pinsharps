@@ -37,13 +37,23 @@ try
     var jobId = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..8];
     var outputFolder = Path.Combine(outputRoot, $"pinsharp-{jobId}");
     var zipPath = Path.Combine(outputRoot, $"pinsharp-{jobId}.zip");
+    var progressLock = new object();
     var options = new BatchRenderOptions(
         PinSize.FromId(cli.SizeId),
         cli.Format.Equals("jpg", StringComparison.OrdinalIgnoreCase) ? "jpg" : "png",
         Math.Clamp(cli.JpegQuality, 1, 100),
         Math.Max(1, cli.ThreadCount),
         fontFile,
-        cli.CreateZip);
+        cli.CreateZip,
+        progress =>
+        {
+            lock (progressLock)
+            {
+                Console.WriteLine(progress.Success
+                    ? $"{progress.Completed}/{progress.Total} completed {progress.FileName}"
+                    : $"{progress.Completed}/{progress.Total} failed {progress.FileName} - {progress.ErrorMessage}");
+            }
+        });
 
     Console.WriteLine($"Input rows: {rows.Count}");
     Console.WriteLine($"Image folder: {imageFolder}");

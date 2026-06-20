@@ -40,6 +40,7 @@ public sealed class BatchRenderService
 
         var results = new RenderedPinResult[items.Length];
         var failures = new ConcurrentBag<string>();
+        var completedCount = 0;
         await Parallel.ForEachAsync(items, new ParallelOptions
         {
             MaxDegreeOfParallelism = Math.Max(1, options.ThreadCount),
@@ -54,10 +55,20 @@ public sealed class BatchRenderService
                 var outputPath = Path.Combine(outputDirectory, fileName);
                 await _renderer.RenderToFileAsync(item.ImagePath, item.Title, outputPath, options, layout, token);
                 results[item.Index] = new RenderedPinResult(item.Title, item.Code, fileName, fileName, layout.Kind);
+                var current = Interlocked.Increment(ref completedCount);
+                var line = $"{current}/{pairedCount} completed {fileName}";
+                await File.AppendAllTextAsync(logPath, line + Environment.NewLine, token);
+                options.Progress?.Invoke(new BatchProgress(current, pairedCount, item.Code, fileName, true));
             }
             catch (Exception ex)
             {
-                failures.Add($"{item.Code}: {Path.GetFileName(item.ImagePath)} - {ex.GetType().Name}: {ex.Message}");
+                var error = $"{ex.GetType().Name}: {ex.Message}";
+                failures.Add($"{item.Code}: {Path.GetFileName(item.ImagePath)} - {error}");
+                var current = Interlocked.Increment(ref completedCount);
+                var fileName = SafeFileName(item.Code) + "." + options.Format.ToLowerInvariant();
+                var line = $"{current}/{pairedCount} failed {fileName} - {error}";
+                await File.AppendAllTextAsync(logPath, line + Environment.NewLine, token);
+                options.Progress?.Invoke(new BatchProgress(current, pairedCount, item.Code, fileName, false, error));
             }
         });
 
