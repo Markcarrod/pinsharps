@@ -19,13 +19,13 @@ public class IndexModel : PageModel
     }
 
     [BindProperty]
-    public string ImageFolder { get; set; } = string.Empty;
+    public string ImageFolder { get; set; } = "/home/kayan/Downloads/Universal/";
 
     [BindProperty]
-    public string OutputFolder { get; set; } = string.Empty;
+    public string OutputFolder { get; set; } = "/home/kayan/Downloads/Universal2";
 
     [BindProperty]
-    public string FontFolder { get; set; } = string.Empty;
+    public string FontFolder { get; set; } = "/home/kayan/Downloads/font/Fonts/";
 
     [BindProperty]
     public string FontName { get; set; } = "random";
@@ -43,7 +43,7 @@ public class IndexModel : PageModel
     public int JpegQuality { get; set; } = 90;
 
     [BindProperty]
-    public int ThreadCount { get; set; } = Math.Max(1, Environment.ProcessorCount / 2);
+    public int ThreadCount { get; set; } = 8;
 
     [BindProperty]
     public bool CreateZip { get; set; }
