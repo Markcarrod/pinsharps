@@ -24,6 +24,9 @@ public class IndexModel : PageModel
     public string OutputFolder { get; set; } = string.Empty;
 
     [BindProperty]
+    public string FontFilePath { get; set; } = string.Empty;
+
+    [BindProperty]
     public IFormFile? InputFile { get; set; }
 
     [BindProperty]
@@ -91,6 +94,7 @@ public class IndexModel : PageModel
             }
 
             var imagePaths = SelectImages(imageFolder, rows.Count);
+            var fontFilePath = ResolveFontFile(FontFilePath);
             var format = Format.Equals("jpg", StringComparison.OrdinalIgnoreCase) ? "jpg" : "png";
             var size = PinSize.FromId(SizeId);
             var quality = Math.Clamp(JpegQuality, 1, 100);
@@ -104,7 +108,7 @@ public class IndexModel : PageModel
                 jobId,
                 imagePaths,
                 rows,
-                new BatchRenderOptions(size, format, quality, threads),
+                new BatchRenderOptions(size, format, quality, threads, fontFilePath),
                 outputFolder,
                 zipPath,
                 cancellationToken);
@@ -148,5 +152,22 @@ public class IndexModel : PageModel
         }
 
         return selected;
+    }
+
+    private static string? ResolveFontFile(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        var path = Path.GetFullPath(value.Trim());
+        var extension = Path.GetExtension(path).ToLowerInvariant();
+        if (extension is not (".ttf" or ".otf" or ".ttc") || !System.IO.File.Exists(path))
+        {
+            throw new InvalidOperationException($"Font file not found or unsupported: {path}");
+        }
+
+        return path;
     }
 }

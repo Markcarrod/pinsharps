@@ -171,6 +171,13 @@ a {
   color: var(--gold);
 }
 
+.field span em {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-style: normal;
+  letter-spacing: 0.04em;
+}
+
 .field input,
 .field select {
   width: 100%;

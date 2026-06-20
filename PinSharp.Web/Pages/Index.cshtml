@@ -42,6 +42,12 @@
         </label>
 
         <label class="field">
+            <span>Font file <em>optional</em></span>
+            <input asp-for="FontFilePath" type="text" placeholder="/home/kayan/fonts/Montserrat-Bold.ttf" autocomplete="off" />
+            <small>Use a <code>.ttf</code>, <code>.otf</code>, or <code>.ttc</code> file. Leave blank for automatic font selection.</small>
+        </label>
+
+        <label class="field">
             <span>input.txt</span>
             <input asp-for="InputFile" type="file" accept=".txt" />
             <small>One line per item: <code>Title goes here|CODE123</code></small>

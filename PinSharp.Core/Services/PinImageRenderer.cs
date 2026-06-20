@@ -32,54 +32,61 @@ public sealed class PinImageRenderer
 
         using var source = SKBitmap.Decode(imagePath);
         DrawCover(canvas, source, info.Rect);
-        DrawLayout(canvas, title, layout, options.Size);
+        DrawLayout(canvas, title, layout, options);
         return bitmap;
     }
 
-    private static void DrawLayout(SKCanvas canvas, string title, LayoutDefinition layout, PinSize size)
+    private static void DrawLayout(SKCanvas canvas, string title, LayoutDefinition layout, BatchRenderOptions options)
     {
+        var size = options.Size;
         switch (layout.Kind)
         {
             case LayoutKind.RightRail:
                 DrawRect(canvas, SKRect.Create(size.Width * .53f, 0, size.Width * .47f, size.Height), layout.OverlayHex, layout.OverlayOpacity);
-                DrawHeadline(canvas, title, layout, SKRect.Create(size.Width * .58f, size.Height * .12f, size.Width * .33f, size.Height * .74f), SKTextAlign.Right);
+                DrawHeadline(canvas, title, layout, options.FontFilePath, SKRect.Create(size.Width * .58f, size.Height * .12f, size.Width * .33f, size.Height * .74f), SKTextAlign.Right);
                 break;
             case LayoutKind.CenterCard:
                 DrawRoundRect(canvas, SKRect.Create(size.Width * .08f, size.Height * .26f, size.Width * .84f, size.Height * .46f), layout.OverlayHex, layout.OverlayOpacity, 36f);
-                DrawHeadline(canvas, title, layout, SKRect.Create(size.Width * .14f, size.Height * .31f, size.Width * .72f, size.Height * .36f), SKTextAlign.Center);
+                DrawHeadline(canvas, title, layout, options.FontFilePath, SKRect.Create(size.Width * .14f, size.Height * .31f, size.Width * .72f, size.Height * .36f), SKTextAlign.Center);
                 break;
             case LayoutKind.LowerSlate:
                 DrawRect(canvas, SKRect.Create(0, size.Height * .58f, size.Width, size.Height * .42f), layout.OverlayHex, layout.OverlayOpacity);
                 DrawRect(canvas, SKRect.Create(0, size.Height * .58f, size.Width, 12), layout.AccentHex, 1f);
-                DrawHeadline(canvas, title, layout, SKRect.Create(size.Width * .08f, size.Height * .64f, size.Width * .84f, size.Height * .28f), SKTextAlign.Left);
+                DrawHeadline(canvas, title, layout, options.FontFilePath, SKRect.Create(size.Width * .08f, size.Height * .64f, size.Width * .84f, size.Height * .28f), SKTextAlign.Left);
                 break;
             case LayoutKind.LeftPanel:
                 DrawRect(canvas, SKRect.Create(0, 0, size.Width * .66f, size.Height), layout.OverlayHex, layout.OverlayOpacity);
                 DrawRect(canvas, SKRect.Create(size.Width * .07f, size.Height * .08f, size.Width * .18f, 10), layout.AccentHex, 1f);
-                DrawHeadline(canvas, title, layout, SKRect.Create(size.Width * .07f, size.Height * .13f, size.Width * .5f, size.Height * .72f), SKTextAlign.Left);
+                DrawHeadline(canvas, title, layout, options.FontFilePath, SKRect.Create(size.Width * .07f, size.Height * .13f, size.Width * .5f, size.Height * .72f), SKTextAlign.Left);
                 break;
             case LayoutKind.Poster:
                 DrawRect(canvas, SKRect.Create(0, 0, size.Width, size.Height), layout.OverlayHex, layout.OverlayOpacity);
-                DrawHeadline(canvas, title, layout, SKRect.Create(size.Width * .1f, size.Height * .2f, size.Width * .8f, size.Height * .56f), SKTextAlign.Center);
+                DrawHeadline(canvas, title, layout, options.FontFilePath, SKRect.Create(size.Width * .1f, size.Height * .2f, size.Width * .8f, size.Height * .56f), SKTextAlign.Center);
                 break;
             case LayoutKind.Frame:
                 DrawRect(canvas, SKRect.Create(0, 0, size.Width, size.Height), layout.OverlayHex, layout.OverlayOpacity);
                 DrawFrame(canvas, size, layout.AccentHex);
-                DrawHeadline(canvas, title, layout, SKRect.Create(size.Width * .12f, size.Height * .22f, size.Width * .76f, size.Height * .54f), SKTextAlign.Center);
+                DrawHeadline(canvas, title, layout, options.FontFilePath, SKRect.Create(size.Width * .12f, size.Height * .22f, size.Width * .76f, size.Height * .54f), SKTextAlign.Center);
                 break;
             case LayoutKind.TopBanner:
                 DrawRoundRect(canvas, SKRect.Create(size.Width * .06f, size.Height * .05f, size.Width * .88f, size.Height * .26f), layout.OverlayHex, layout.OverlayOpacity, 26f);
-                DrawHeadline(canvas, title, layout, SKRect.Create(size.Width * .1f, size.Height * .09f, size.Width * .8f, size.Height * .2f), SKTextAlign.Center);
+                DrawHeadline(canvas, title, layout, options.FontFilePath, SKRect.Create(size.Width * .1f, size.Height * .09f, size.Width * .8f, size.Height * .2f), SKTextAlign.Center);
                 break;
             case LayoutKind.SideSplit:
                 DrawRect(canvas, SKRect.Create(0, 0, size.Width * .53f, size.Height), layout.OverlayHex, layout.OverlayOpacity);
                 DrawRect(canvas, SKRect.Create(size.Width * .49f, size.Height * .09f, size.Width * .12f, 12), layout.AccentHex, 1f);
-                DrawHeadline(canvas, title, layout, SKRect.Create(size.Width * .06f, size.Height * .11f, size.Width * .4f, size.Height * .76f), SKTextAlign.Left);
+                DrawHeadline(canvas, title, layout, options.FontFilePath, SKRect.Create(size.Width * .06f, size.Height * .11f, size.Width * .4f, size.Height * .76f), SKTextAlign.Left);
                 break;
         }
     }
 
-    private static void DrawHeadline(SKCanvas canvas, string title, LayoutDefinition layout, SKRect box, SKTextAlign align)
+    private static void DrawHeadline(
+        SKCanvas canvas,
+        string title,
+        LayoutDefinition layout,
+        string? fontFilePath,
+        SKRect box,
+        SKTextAlign align)
     {
         var palette = ResolvePalette(ParseColor(layout.OverlayHex), layout.OverlayOpacity);
         var wordCount = title.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
@@ -90,7 +97,7 @@ public sealed class PinImageRenderer
             _ => (42f, 140f)
         };
 
-        using var typeface = FontResolver.Resolve(layout.HeadingFont, layout.Bold);
+        var typeface = FontResolver.Resolve(layout.HeadingFont, layout.Bold, fontFilePath);
         var (paint, font, lines) = FitText(title, box, palette.Foreground, typeface, minSize, maxSize);
         using (paint)
         using (font)

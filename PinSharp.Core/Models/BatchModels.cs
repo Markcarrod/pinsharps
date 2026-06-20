@@ -20,7 +20,12 @@ public sealed record BatchInputRow(string Title, string Code);
 
 public sealed record BatchRenderItem(string ImagePath, string Title, string Code, int Index);
 
-public sealed record BatchRenderOptions(PinSize Size, string Format, int JpegQuality, int ThreadCount);
+public sealed record BatchRenderOptions(
+    PinSize Size,
+    string Format,
+    int JpegQuality,
+    int ThreadCount,
+    string? FontFilePath = null);
 
 public sealed record RenderedPinResult(string Title, string Code, string FileName, string RelativePath, LayoutKind Layout);
 

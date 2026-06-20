@@ -25,8 +25,9 @@ http://127.0.0.1:5099
 1. Enter the Linux path to the source image folder; images are read directly without upload.
 2. Upload `input.txt` with one `title|code` line per row.
 3. Enter an output folder and choose canvas, format, JPG quality, and thread count.
-4. Run the batch.
-5. Preview outputs and download the zip.
+4. Optionally enter the Linux path to a `.ttf`, `.otf`, or `.ttc` font file.
+5. Run the batch.
+6. Find the generated images and ZIP in the selected output folder.
 
 ## Build
 
