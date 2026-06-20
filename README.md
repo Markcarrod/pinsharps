@@ -43,10 +43,41 @@ Font name: monst
 dotnet build PinCreator.sln -c Release
 ```
 
-The solution contains only the Linux-compatible web application and its core dependency. Run it with:
+The solution contains the Linux-compatible web application, terminal CLI, and shared core dependency. Run the web app with:
 
 ```bash
 dotnet run --project PinSharp.Web/PinSharp.Web.csproj -c Release --urls http://0.0.0.0:5099
+```
+
+## Terminal CLI
+
+Run a batch without the browser:
+
+```bash
+dotnet run --project PinSharp.Cli -c Release
+```
+
+That default command uses:
+
+```text
+Input: /home/kayan/Downloads/output4clean.txt
+Images: /home/kayan/Downloads/Universal/
+Output: /home/kayan/Downloads/Universal2
+Fonts: /home/kayan/Downloads/font/Fonts/
+Threads: 8
+ZIP: off
+```
+
+Override anything when needed:
+
+```bash
+dotnet run --project PinSharp.Cli -c Release -- \
+  --input /home/kayan/Downloads/output4clean.txt \
+  --images /home/kayan/Downloads/Universal/ \
+  --output /home/kayan/Downloads/Universal2 \
+  --fonts /home/kayan/Downloads/font/Fonts/ \
+  --font random \
+  --threads 8
 ```
 
 ## Notes
