@@ -28,24 +28,14 @@ public sealed class BatchRenderService
         }
 
         var pairedCount = Math.Min(imagePaths.Count, inputRows.Count);
-        var duplicateCode = inputRows
-            .Take(pairedCount)
-            .GroupBy(row => row.Code, StringComparer.OrdinalIgnoreCase)
-            .FirstOrDefault(group => string.IsNullOrWhiteSpace(group.Key) || group.Count() > 1);
-
-        if (duplicateCode is not null)
-        {
-            throw new InvalidOperationException(string.IsNullOrWhiteSpace(duplicateCode.Key)
-                ? "Every input row must include both title and code."
-                : $"The code '{duplicateCode.Key}' appears more than once.");
-        }
+        var rows = NormalizeCodes(inputRows.Take(pairedCount));
 
         Directory.CreateDirectory(outputDirectory);
         var logPath = Path.Combine(outputDirectory, "pinsharp-run.log");
         await File.AppendAllTextAsync(logPath, $"[{DateTimeOffset.Now:O}] Starting {pairedCount} pins with {options.ThreadCount} threads.{Environment.NewLine}", cancellationToken);
 
         var items = Enumerable.Range(0, pairedCount)
-            .Select(index => new BatchRenderItem(imagePaths[index], inputRows[index].Title, inputRows[index].Code, index))
+            .Select(index => new BatchRenderItem(imagePaths[index], rows[index].Title, rows[index].Code, index))
             .ToArray();
 
         var results = new RenderedPinResult[items.Length];
@@ -114,6 +104,30 @@ public sealed class BatchRenderService
             ? LayoutCatalog.All.Where(layout => layout.Kind is not LayoutKind.SideSplit).ToArray()
             : LayoutCatalog.All.ToArray();
         return choices[item.Index % choices.Length];
+    }
+
+    private static IReadOnlyList<BatchInputRow> NormalizeCodes(IEnumerable<BatchInputRow> inputRows)
+    {
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        var normalized = new List<BatchInputRow>();
+
+        foreach (var row in inputRows)
+        {
+            if (string.IsNullOrWhiteSpace(row.Title) || string.IsNullOrWhiteSpace(row.Code))
+            {
+                throw new InvalidOperationException("Every input row must include both title and code.");
+            }
+
+            var baseCode = row.Code.Trim();
+            counts.TryGetValue(baseCode, out var current);
+            current++;
+            counts[baseCode] = current;
+
+            var code = current == 1 ? baseCode : $"{baseCode}_{current:00}";
+            normalized.Add(row with { Code = code });
+        }
+
+        return normalized;
     }
 
     private static string SafeFileName(string value)
