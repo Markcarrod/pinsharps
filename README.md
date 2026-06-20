@@ -26,8 +26,9 @@ http://127.0.0.1:5099
 2. Upload `input.txt` with one `title|code` line per row.
 3. Enter an output folder and choose canvas, format, JPG quality, and thread count.
 4. Optionally enter a font folder such as `/home/kayan/fonts` and use `random` or a partial name like `monst`.
-5. Run the batch.
-6. Find the generated images and ZIP in the selected output folder.
+5. Leave ZIP off for large batches unless you really need one.
+6. Run the batch.
+7. Find the generated images and `pinsharp-run.log` in the selected output folder.
 
 Font folders are scanned recursively, so `/home/kayan/fonts/Monse/monst.ttf` works when the page has:
 
@@ -53,4 +54,5 @@ dotnet run --project PinSharp.Web/PinSharp.Web.csproj -c Release --urls http://0
 - The web app is the recommended Linux path.
 - .NET 10 SDK and ASP.NET Core 10 runtime are required.
 - Each batch is written to a timestamped directory under the selected output folder.
+- Large batches should run without ZIP creation; the ZIP option is available only when needed.
 - The archived `PinCreator` WPF project is not part of `PinCreator.sln`.

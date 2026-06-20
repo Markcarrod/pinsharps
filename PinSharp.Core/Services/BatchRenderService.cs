@@ -1,4 +1,5 @@
 using System.IO.Compression;
+using System.Collections.Concurrent;
 using PinSharp.Core.Models;
 
 namespace PinSharp.Core.Services;
@@ -40,12 +41,15 @@ public sealed class BatchRenderService
         }
 
         Directory.CreateDirectory(outputDirectory);
+        var logPath = Path.Combine(outputDirectory, "pinsharp-run.log");
+        await File.AppendAllTextAsync(logPath, $"[{DateTimeOffset.Now:O}] Starting {pairedCount} pins with {options.ThreadCount} threads.{Environment.NewLine}", cancellationToken);
 
         var items = Enumerable.Range(0, pairedCount)
             .Select(index => new BatchRenderItem(imagePaths[index], inputRows[index].Title, inputRows[index].Code, index))
             .ToArray();
 
         var results = new RenderedPinResult[items.Length];
+        var failures = new ConcurrentBag<string>();
         await Parallel.ForEachAsync(items, new ParallelOptions
         {
             MaxDegreeOfParallelism = Math.Max(1, options.ThreadCount),
@@ -53,28 +57,54 @@ public sealed class BatchRenderService
         }, async (item, token) =>
         {
             token.ThrowIfCancellationRequested();
-            var layout = SelectLayout(item);
-            var fileName = SafeFileName(item.Code) + "." + options.Format.ToLowerInvariant();
-            var outputPath = Path.Combine(outputDirectory, fileName);
-            await _renderer.RenderToFileAsync(item.ImagePath, item.Title, outputPath, options, layout, token);
-            results[item.Index] = new RenderedPinResult(item.Title, item.Code, fileName, fileName, layout.Kind);
+            try
+            {
+                var layout = SelectLayout(item);
+                var fileName = SafeFileName(item.Code) + "." + options.Format.ToLowerInvariant();
+                var outputPath = Path.Combine(outputDirectory, fileName);
+                await _renderer.RenderToFileAsync(item.ImagePath, item.Title, outputPath, options, layout, token);
+                results[item.Index] = new RenderedPinResult(item.Title, item.Code, fileName, fileName, layout.Kind);
+            }
+            catch (Exception ex)
+            {
+                failures.Add($"{item.Code}: {Path.GetFileName(item.ImagePath)} - {ex.GetType().Name}: {ex.Message}");
+            }
         });
 
-        if (File.Exists(zipPath))
+        if (!failures.IsEmpty)
         {
-            File.Delete(zipPath);
+            await File.AppendAllLinesAsync(logPath, failures.OrderBy(line => line, StringComparer.OrdinalIgnoreCase), cancellationToken);
         }
 
-        ZipFile.CreateFromDirectory(outputDirectory, zipPath);
+        var completed = results.OfType<RenderedPinResult>().ToArray();
+        if (completed.Length == 0)
+        {
+            var sample = failures.Take(5).ToArray();
+            throw new InvalidOperationException("No pins rendered. Check pinsharp-run.log in the output folder. " + string.Join(" | ", sample));
+        }
+
+        var zipName = string.Empty;
+        if (options.CreateZip)
+        {
+            if (File.Exists(zipPath))
+            {
+                File.Delete(zipPath);
+            }
+
+            ZipFile.CreateFromDirectory(outputDirectory, zipPath);
+            zipName = Path.GetFileName(zipPath);
+        }
+
+        await File.AppendAllTextAsync(logPath, $"[{DateTimeOffset.Now:O}] Completed {completed.Length}/{pairedCount} pins. Failed: {failures.Count}.{Environment.NewLine}", cancellationToken);
 
         return new BatchRenderSummary(
             jobId,
             imagePaths.Count,
             inputRows.Count,
-            results.Length,
+            completed.Length,
             options.ThreadCount,
-            Path.GetFileName(zipPath),
-            results);
+            zipName,
+            completed);
     }
 
     private static LayoutDefinition SelectLayout(BatchRenderItem item)

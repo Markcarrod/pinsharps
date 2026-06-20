@@ -31,6 +31,11 @@ public sealed class PinImageRenderer
         canvas.Clear(ParseColor("#0F151B"));
 
         using var source = SKBitmap.Decode(imagePath);
+        if (source is null)
+        {
+            throw new InvalidOperationException($"Unsupported or unreadable image: {imagePath}");
+        }
+
         DrawCover(canvas, source, info.Rect);
         DrawLayout(canvas, title, layout, options);
         return bitmap;

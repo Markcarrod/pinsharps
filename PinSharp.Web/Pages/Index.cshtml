@@ -96,6 +96,12 @@
             </label>
         </div>
 
+        <label class="check-field">
+            <input asp-for="CreateZip" type="checkbox" />
+            <span>Create ZIP after render</span>
+            <small>Leave off for large batches. Images are always saved to the output folder.</small>
+        </label>
+
         <button type="submit" class="primary-action">Run batch render</button>
     </form>
 
@@ -123,7 +129,9 @@
                 <span>Images</span>
                 <code>@Model.CompletedOutputFolder</code>
                 <span>ZIP</span>
-                <code>@Model.CompletedZipPath</code>
+                <code>@(Model.CompletedZipPath ?? "Skipped")</code>
+                <span>Log</span>
+                <code>@System.IO.Path.Combine(Model.CompletedOutputFolder ?? string.Empty, "pinsharp-run.log")</code>
             </div>
         </div>
 

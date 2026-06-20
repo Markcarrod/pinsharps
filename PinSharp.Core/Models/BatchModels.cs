@@ -25,7 +25,8 @@ public sealed record BatchRenderOptions(
     string Format,
     int JpegQuality,
     int ThreadCount,
-    string? FontFilePath = null);
+    string? FontFilePath = null,
+    bool CreateZip = false);
 
 public sealed record RenderedPinResult(string Title, string Code, string FileName, string RelativePath, LayoutKind Layout);
 

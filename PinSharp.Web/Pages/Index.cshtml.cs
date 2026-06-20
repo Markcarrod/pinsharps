@@ -45,6 +45,9 @@ public class IndexModel : PageModel
     [BindProperty]
     public int ThreadCount { get; set; } = Math.Max(1, Environment.ProcessorCount / 2);
 
+    [BindProperty]
+    public bool CreateZip { get; set; }
+
     public BatchRenderSummary? Summary { get; private set; }
 
     public string? ErrorMessage { get; private set; }
@@ -112,12 +115,12 @@ public class IndexModel : PageModel
                 jobId,
                 imagePaths,
                 rows,
-                new BatchRenderOptions(size, format, quality, threads, fontFilePath),
+                new BatchRenderOptions(size, format, quality, threads, fontFilePath, CreateZip),
                 outputFolder,
                 zipPath,
                 cancellationToken);
             CompletedOutputFolder = outputFolder;
-            CompletedZipPath = zipPath;
+            CompletedZipPath = CreateZip ? zipPath : null;
         }
         catch (Exception ex)
         {
