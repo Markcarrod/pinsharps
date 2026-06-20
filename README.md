@@ -1,12 +1,12 @@
 # PinSharp
 
-Cross-platform batch pin generator built with `ASP.NET Core` and `SkiaSharp`.
+Cross-platform .NET 10 batch pin generator built with `ASP.NET Core` and `SkiaSharp`.
 
 ## Projects
 
 - `PinSharp.Web`: browser dashboard for Linux RDP, VPS, or local use
 - `PinSharp.Core`: shared batch parsing and rendering engine
-- `PinCreator`: original WPF desktop app kept for Windows
+- `PinCreator`: archived Windows frontend, excluded from the Linux solution build
 
 ## Web Run
 
@@ -30,12 +30,19 @@ http://127.0.0.1:5099
 
 ## Build
 
-```powershell
+```bash
 dotnet build PinCreator.sln -c Release
+```
+
+The solution contains only the Linux-compatible web application and its core dependency. Run it with:
+
+```bash
+dotnet run --project PinSharp.Web/PinSharp.Web.csproj -c Release --urls http://0.0.0.0:5099
 ```
 
 ## Notes
 
 - The web app is the recommended Linux path.
+- .NET 10 SDK and ASP.NET Core 10 runtime are required.
 - Rendered browser batches are written under `PinSharp.Web/wwwroot/runs/`.
-- `PinCreator` remains available if you still want the native Windows app.
+- The archived `PinCreator` WPF project is not part of `PinCreator.sln`.
