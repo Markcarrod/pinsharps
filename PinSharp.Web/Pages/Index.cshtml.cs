@@ -11,16 +11,17 @@ public class IndexModel : PageModel
         new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".bmp", ".webp" };
 
     private readonly BatchRenderService _batchRenderService;
-    private readonly IWebHostEnvironment _environment;
 
-    public IndexModel(BatchRenderService batchRenderService, IWebHostEnvironment environment)
+    public IndexModel(BatchRenderService batchRenderService)
     {
         _batchRenderService = batchRenderService;
-        _environment = environment;
     }
 
     [BindProperty]
-    public List<IFormFile> Images { get; set; } = [];
+    public string ImageFolder { get; set; } = string.Empty;
+
+    [BindProperty]
+    public string OutputFolder { get; set; } = string.Empty;
 
     [BindProperty]
     public IFormFile? InputFile { get; set; }
@@ -41,6 +42,10 @@ public class IndexModel : PageModel
 
     public string? ErrorMessage { get; private set; }
 
+    public string? CompletedOutputFolder { get; private set; }
+
+    public string? CompletedZipPath { get; private set; }
+
     public IReadOnlyList<PinSize> Sizes => PinSize.Presets;
 
     public IReadOnlyList<int> ThreadOptions => Enumerable.Range(1, Math.Max(1, Environment.ProcessorCount)).ToArray();
@@ -51,40 +56,25 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
-        var selectedImages = Images
-            .Where(image => image.Length > 0 && SupportedImageExtensions.Contains(Path.GetExtension(image.FileName)))
-            .OrderBy(image => image.FileName, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (selectedImages.Length == 0 || InputFile is null || InputFile.Length == 0)
+        if (string.IsNullOrWhiteSpace(ImageFolder) || string.IsNullOrWhiteSpace(OutputFolder) ||
+            InputFile is null || InputFile.Length == 0)
         {
-            ErrorMessage = "Select an image folder and an input.txt file before running the batch.";
+            ErrorMessage = "Enter the image and output folder paths, then select an input.txt file.";
             return Page();
         }
 
-        var format = Format.Equals("jpg", StringComparison.OrdinalIgnoreCase) ? "jpg" : "png";
-        var size = PinSize.FromId(SizeId);
-        var quality = Math.Clamp(JpegQuality, 1, 100);
-        var threads = Math.Clamp(ThreadCount, 1, Math.Max(1, Environment.ProcessorCount));
-        var jobId = DateTime.UtcNow.ToString("yyyyMMddHHmmss") + "-" + Guid.NewGuid().ToString("N")[..8];
-        var jobRoot = Path.Combine(_environment.WebRootPath, "runs", jobId);
-        var sourceFolder = Path.Combine(jobRoot, "source");
-        var outputFolder = Path.Combine(jobRoot, "output");
-        Directory.CreateDirectory(sourceFolder);
-        Directory.CreateDirectory(outputFolder);
-
         try
         {
-            var imagePaths = new List<string>();
-            for (var index = 0; index < selectedImages.Length; index++)
+            var imageFolder = Path.GetFullPath(ImageFolder.Trim());
+            var outputRoot = Path.GetFullPath(OutputFolder.Trim());
+            if (!Directory.Exists(imageFolder))
             {
-                var image = selectedImages[index];
-                var extension = Path.GetExtension(image.FileName);
-                var safeName = Path.GetFileNameWithoutExtension(image.FileName);
-                var filePath = Path.Combine(sourceFolder, $"{index:D6}-{safeName}{extension}");
-                await using var stream = System.IO.File.Create(filePath);
-                await image.CopyToAsync(stream, cancellationToken);
-                imagePaths.Add(filePath);
+                throw new DirectoryNotFoundException($"Image folder not found: {imageFolder}");
+            }
+
+            if (imageFolder.Equals(outputRoot, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("The image and output folders must be different.");
             }
 
             string inputContent;
@@ -95,7 +85,21 @@ public class IndexModel : PageModel
             }
 
             var rows = TextBankParser.Parse(inputContent);
-            var zipPath = Path.Combine(jobRoot, "batch-output.zip");
+            if (rows.Count == 0)
+            {
+                throw new InvalidOperationException("The input file has no valid title|code rows.");
+            }
+
+            var imagePaths = SelectImages(imageFolder, rows.Count);
+            var format = Format.Equals("jpg", StringComparison.OrdinalIgnoreCase) ? "jpg" : "png";
+            var size = PinSize.FromId(SizeId);
+            var quality = Math.Clamp(JpegQuality, 1, 100);
+            var threads = Math.Clamp(ThreadCount, 1, Math.Max(1, Environment.ProcessorCount));
+            var jobId = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N")[..8];
+            var outputFolder = Path.Combine(outputRoot, $"pinsharp-{jobId}");
+            var zipPath = Path.Combine(outputRoot, $"pinsharp-{jobId}.zip");
+            Directory.CreateDirectory(outputRoot);
+
             Summary = await _batchRenderService.RenderAsync(
                 jobId,
                 imagePaths,
@@ -104,6 +108,8 @@ public class IndexModel : PageModel
                 outputFolder,
                 zipPath,
                 cancellationToken);
+            CompletedOutputFolder = outputFolder;
+            CompletedZipPath = zipPath;
         }
         catch (Exception ex)
         {
@@ -111,5 +117,36 @@ public class IndexModel : PageModel
         }
 
         return Page();
+    }
+
+    private static IReadOnlyList<string> SelectImages(string folder, int requiredCount)
+    {
+        var selected = new List<string>(requiredCount);
+        foreach (var path in Directory.EnumerateFiles(folder, "*", SearchOption.TopDirectoryOnly))
+        {
+            if (!SupportedImageExtensions.Contains(Path.GetExtension(path)))
+            {
+                continue;
+            }
+
+            selected.Add(path);
+            if (selected.Count == requiredCount)
+            {
+                break;
+            }
+        }
+
+        if (selected.Count == 0)
+        {
+            throw new InvalidOperationException("No supported images were found in the image folder.");
+        }
+
+        var availableCount = selected.Count;
+        while (selected.Count < requiredCount)
+        {
+            selected.Add(selected[selected.Count % availableCount]);
+        }
+
+        return selected;
     }
 }

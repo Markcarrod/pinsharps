@@ -8,7 +8,7 @@
     <div>
         <p class="eyebrow">Linux-ready batch pin production</p>
         <h1>PinSharp Web Studio</h1>
-        <p class="hero-copy">Select an image folder, upload one <code>title|code</code> file, render in parallel, and download the finished batch as a zip.</p>
+        <p class="hero-copy">Read images directly from a Linux folder, pair them with one <code>title|code</code> file, and write the finished batch to your output folder.</p>
     </div>
     <div class="hero-card">
         <div class="metric"><strong>@Environment.ProcessorCount</strong><span>CPU threads available</span></div>
@@ -31,8 +31,14 @@
 
         <label class="field">
             <span>Image folder</span>
-            <input asp-for="Images" type="file" accept=".jpg,.jpeg,.png,.bmp,.webp" webkitdirectory="" directory="" multiple />
-            <small>Select one folder. Supported images are paired in filename order.</small>
+            <input asp-for="ImageFolder" type="text" placeholder="/home/kayan/images" autocomplete="off" />
+            <small>Linux path read directly by PinSharp. Images are not uploaded or copied.</small>
+        </label>
+
+        <label class="field">
+            <span>Output folder</span>
+            <input asp-for="OutputFolder" type="text" placeholder="/home/kayan/output" autocomplete="off" />
+            <small>Each batch gets its own timestamped folder and ZIP here.</small>
         </label>
 
         <label class="field">
@@ -84,8 +90,8 @@
     <aside class="notes-panel">
         <h2>What changed</h2>
         <ul>
-            <li>The batch tool now runs in a browser, which fits Linux RDP much better than WPF.</li>
-            <li>Rendering uses a cross-platform image pipeline, so the same batch flow can move to Linux hosting.</li>
+            <li>Images are streamed from the Linux filesystem instead of uploaded through the browser.</li>
+            <li>Only enough images for the current input are selected; the list loops only when necessary.</li>
             <li>Parallel rendering is controlled directly from the page.</li>
         </ul>
     </aside>
@@ -98,16 +104,20 @@
             <div>
                 <p class="eyebrow">Batch complete</p>
                 <h2>@Model.Summary.RenderedCount pins rendered</h2>
-                <p>@Model.Summary.InputRows input rows, @Model.Summary.QueuedImages uploaded images, @Model.Summary.ThreadCount threads used.</p>
+                <p>@Model.Summary.InputRows input rows, @Model.Summary.QueuedImages source images used, @Model.Summary.ThreadCount threads.</p>
             </div>
-            <a class="download-link" href="~/runs/@Model.Summary.JobId/@Model.Summary.ZipRelativePath">Download zip</a>
+            <div class="output-locations">
+                <span>Images</span>
+                <code>@Model.CompletedOutputFolder</code>
+                <span>ZIP</span>
+                <code>@Model.CompletedZipPath</code>
+            </div>
         </div>
 
         <div class="result-grid">
-            @foreach (var item in Model.Summary.Outputs)
+            @foreach (var item in Model.Summary.Outputs.Take(24))
             {
                 <article class="result-card">
-                    <img src="~/runs/@Model.Summary.JobId/output/@item.RelativePath" alt="@item.Title" loading="lazy" />
                     <div class="result-meta">
                         <strong>@item.Code</strong>
                         <span>@item.Layout</span>
@@ -116,5 +126,9 @@
                 </article>
             }
         </div>
+        @if (Model.Summary.Outputs.Count > 24)
+        {
+            <p class="result-limit">Showing 24 of @Model.Summary.Outputs.Count results. All files were saved to the output folder.</p>
+        }
     </section>
 }

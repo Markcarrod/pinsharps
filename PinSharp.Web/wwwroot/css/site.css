@@ -238,6 +238,25 @@ a {
   margin-bottom: 22px;
 }
 
+.output-locations {
+  display: grid;
+  gap: 5px;
+  min-width: min(100%, 340px);
+}
+
+.output-locations span {
+  color: var(--gold);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.output-locations code {
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
 .result-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -277,6 +296,11 @@ a {
 
 .result-meta p {
   margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.result-limit {
+  margin: 20px 0 0;
   color: var(--muted);
 }
 

@@ -18,7 +18,7 @@ public sealed class BatchRenderService
     {
         if (imagePaths.Count == 0)
         {
-            throw new InvalidOperationException("Upload at least one image.");
+            throw new InvalidOperationException("No source images were selected.");
         }
 
         if (inputRows.Count == 0)

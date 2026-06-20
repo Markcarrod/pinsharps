@@ -22,9 +22,9 @@ http://127.0.0.1:5099
 
 ## Web Flow
 
-1. Upload multiple images.
+1. Enter the Linux path to the source image folder; images are read directly without upload.
 2. Upload `input.txt` with one `title|code` line per row.
-3. Choose canvas, format, JPG quality, and thread count.
+3. Enter an output folder and choose canvas, format, JPG quality, and thread count.
 4. Run the batch.
 5. Preview outputs and download the zip.
 
@@ -44,5 +44,5 @@ dotnet run --project PinSharp.Web/PinSharp.Web.csproj -c Release --urls http://0
 
 - The web app is the recommended Linux path.
 - .NET 10 SDK and ASP.NET Core 10 runtime are required.
-- Rendered browser batches are written under `PinSharp.Web/wwwroot/runs/`.
+- Each batch is written to a timestamped directory under the selected output folder.
 - The archived `PinCreator` WPF project is not part of `PinCreator.sln`.
