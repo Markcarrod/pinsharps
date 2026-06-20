@@ -7,6 +7,9 @@ namespace PinSharp.Web.Pages;
 
 public class IndexModel : PageModel
 {
+    private static readonly HashSet<string> SupportedImageExtensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".bmp", ".webp" };
+
     private readonly BatchRenderService _batchRenderService;
     private readonly IWebHostEnvironment _environment;
 
@@ -48,9 +51,14 @@ public class IndexModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(CancellationToken cancellationToken)
     {
-        if (Images.Count == 0 || InputFile is null || InputFile.Length == 0)
+        var selectedImages = Images
+            .Where(image => image.Length > 0 && SupportedImageExtensions.Contains(Path.GetExtension(image.FileName)))
+            .OrderBy(image => image.FileName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (selectedImages.Length == 0 || InputFile is null || InputFile.Length == 0)
         {
-            ErrorMessage = "Upload images and an input.txt file before running the batch.";
+            ErrorMessage = "Select an image folder and an input.txt file before running the batch.";
             return Page();
         }
 
@@ -68,11 +76,12 @@ public class IndexModel : PageModel
         try
         {
             var imagePaths = new List<string>();
-            foreach (var image in Images)
+            for (var index = 0; index < selectedImages.Length; index++)
             {
+                var image = selectedImages[index];
                 var extension = Path.GetExtension(image.FileName);
                 var safeName = Path.GetFileNameWithoutExtension(image.FileName);
-                var filePath = Path.Combine(sourceFolder, $"{safeName}{extension}");
+                var filePath = Path.Combine(sourceFolder, $"{index:D6}-{safeName}{extension}");
                 await using var stream = System.IO.File.Create(filePath);
                 await image.CopyToAsync(stream, cancellationToken);
                 imagePaths.Add(filePath);

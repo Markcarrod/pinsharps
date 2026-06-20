@@ -8,7 +8,7 @@
     <div>
         <p class="eyebrow">Linux-ready batch pin production</p>
         <h1>PinSharp Web Studio</h1>
-        <p class="hero-copy">Upload a stack of images, upload one <code>title|code</code> file, render in parallel, and download the finished batch as a zip.</p>
+        <p class="hero-copy">Select an image folder, upload one <code>title|code</code> file, render in parallel, and download the finished batch as a zip.</p>
     </div>
     <div class="hero-card">
         <div class="metric"><strong>@Environment.ProcessorCount</strong><span>CPU threads available</span></div>
@@ -30,9 +30,9 @@
         }
 
         <label class="field">
-            <span>Images</span>
-            <input asp-for="Images" type="file" accept=".jpg,.jpeg,.png,.bmp,.webp" multiple />
-            <small>Upload the image stack in the order you want paired.</small>
+            <span>Image folder</span>
+            <input asp-for="Images" type="file" accept=".jpg,.jpeg,.png,.bmp,.webp" webkitdirectory="" directory="" multiple />
+            <small>Select one folder. Supported images are paired in filename order.</small>
         </label>
 
         <label class="field">
