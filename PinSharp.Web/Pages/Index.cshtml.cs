@@ -40,7 +40,7 @@ public class IndexModel : PageModel
     public string Format { get; set; } = "png";
 
     [BindProperty]
-    public int JpegQuality { get; set; } = 90;
+    public int JpegQuality { get; set; } = 75;
 
     [BindProperty]
     public int ThreadCount { get; set; } = 8;

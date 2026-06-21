@@ -284,7 +284,7 @@ internal sealed record CliOptions(
             values.GetValueOrDefault("font", "random"),
             int.TryParse(values.GetValueOrDefault("threads"), out var threads) ? threads : 8,
             values.GetValueOrDefault("format", "png"),
-            int.TryParse(values.GetValueOrDefault("quality"), out var quality) ? quality : 90,
+            int.TryParse(values.GetValueOrDefault("quality"), out var quality) ? quality : 75,
             values.GetValueOrDefault("size", "pinterest-standard"),
             flags.Contains("zip"),
             flags.Contains("help"));

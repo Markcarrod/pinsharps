@@ -121,7 +121,7 @@
                         <Grid Margin="0,11,0,0">
                             <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="10"/><ColumnDefinition/></Grid.ColumnDefinitions>
                             <StackPanel><TextBlock Text="FORMAT" Style="{StaticResource Label}"/><ComboBox x:Name="FormatBox" SelectedIndex="0"><ComboBoxItem Content="PNG"/><ComboBoxItem Content="JPG"/></ComboBox></StackPanel>
-                            <StackPanel Grid.Column="2"><TextBlock Text="JPG QUALITY" Style="{StaticResource Label}"/><TextBox x:Name="QualityBox" Text="90"/></StackPanel>
+                            <StackPanel Grid.Column="2"><TextBlock Text="JPG QUALITY" Style="{StaticResource Label}"/><TextBox x:Name="QualityBox" Text="75"/></StackPanel>
                         </Grid>
                         <TextBlock Text="THREADS" Style="{StaticResource Label}" Margin="0,12,0,6"/>
                         <ComboBox x:Name="ThreadBox" SelectionChanged="Input_Changed"/>

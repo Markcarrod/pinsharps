@@ -24,7 +24,7 @@ http://127.0.0.1:5099
 
 1. Enter the Linux path to the source image folder; images are read directly without upload.
 2. Upload `input.txt` with one `title|code` line per row.
-3. Enter an output folder and choose canvas, format, JPG quality, and thread count.
+3. Enter an output folder and choose canvas, format, JPG quality (default `75`), and thread count.
 4. Optionally enter a font folder such as `/home/kayan/fonts` and use `random` or a partial name like `monst`.
 5. Leave ZIP off for large batches unless you really need one.
 6. Run the batch.
