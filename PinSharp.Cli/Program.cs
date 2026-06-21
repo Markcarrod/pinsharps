@@ -227,8 +227,8 @@ Options:
   --fonts PATH       font folder or exact font file
   --font NAME        random, partial font name, or exact font path
   --threads N        worker count
-  --format png|jpg   output format
-  --quality N        JPG quality, 1-100
+  --format png|jpg   output format (default: jpg)
+  --quality N        JPG quality, 1-100 (default: 85)
   --size ID          pinterest-standard, pinterest-tall, portrait-social, square
   --zip              create ZIP after render
   --help             show this help
@@ -283,8 +283,8 @@ internal sealed record CliOptions(
             values.GetValueOrDefault("fonts", "/home/kayan/Downloads/font/Fonts/"),
             values.GetValueOrDefault("font", "random"),
             int.TryParse(values.GetValueOrDefault("threads"), out var threads) ? threads : 8,
-            values.GetValueOrDefault("format", "png"),
-            int.TryParse(values.GetValueOrDefault("quality"), out var quality) ? quality : 75,
+            values.GetValueOrDefault("format", "jpg"),
+            int.TryParse(values.GetValueOrDefault("quality"), out var quality) ? quality : 85,
             values.GetValueOrDefault("size", "pinterest-standard"),
             flags.Contains("zip"),
             flags.Contains("help"));

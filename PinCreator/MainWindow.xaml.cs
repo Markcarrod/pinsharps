@@ -488,7 +488,7 @@ public partial class MainWindow : Window
         base.OnClosed(e);
     }
 
-    private int Quality() => int.TryParse(QualityBox.Text, out var value) ? Math.Clamp(value, 1, 100) : 75;
+    private int Quality() => int.TryParse(QualityBox.Text, out var value) ? Math.Clamp(value, 1, 100) : 85;
 
     private IReadOnlyList<ThreadOption> BuildThreadOptions()
     {

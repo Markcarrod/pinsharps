@@ -37,10 +37,10 @@ public class IndexModel : PageModel
     public string SizeId { get; set; } = PinSize.Presets[0].Id;
 
     [BindProperty]
-    public string Format { get; set; } = "png";
+    public string Format { get; set; } = "jpg";
 
     [BindProperty]
-    public int JpegQuality { get; set; } = 75;
+    public int JpegQuality { get; set; } = 85;
 
     [BindProperty]
     public int ThreadCount { get; set; } = 8;

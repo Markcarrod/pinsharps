@@ -38,7 +38,7 @@ public sealed class PinRenderer
         return bitmap;
     }
 
-    public void Save(BitmapSource bitmap, string path, int jpegQuality = 90)
+    public void Save(BitmapSource bitmap, string path, int jpegQuality = 85)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
         BitmapEncoder encoder = Path.GetExtension(path).Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
