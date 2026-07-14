@@ -10,6 +10,7 @@ namespace PinCreator.Services;
 public sealed class PinRenderer
 {
     private const double Dip = 1.0;
+    private const double FontScale = 0.92;
 
     public BitmapSource LoadImage(string path)
     {
@@ -153,7 +154,7 @@ public sealed class PinRenderer
 
         if (!string.IsNullOrWhiteSpace(content.Category))
         {
-            DrawSimpleText(dc, content.Category.ToUpperInvariant(), "Bahnschrift", FontWeights.SemiBold, Math.Max(18, bounds.Width * .032), Brush(layout.Accent), new Point(bounds.X, y), bounds.Width, alignment);
+            DrawSimpleText(dc, content.Category.ToUpperInvariant(), "Bahnschrift", FontWeights.SemiBold, ScaledFont(Math.Max(18, bounds.Width * .032)), Brush(layout.Accent), new Point(bounds.X, y), bounds.Width, alignment);
             y += bounds.Height * .1;
         }
 
@@ -170,14 +171,15 @@ public sealed class PinRenderer
             <= 12 => (48d, 170d, .31),
             _ => (38d, 140d, .27)
         };
-        var maximumTitleSize = Math.Min(maximumCap, bounds.Width * widthScale);
-        var (titleText, titleSize) = FitText(title, layout.HeadingFont, FontWeights.ExtraBold, foreground, bounds.Width, titleHeight, alignment, minimumTitleSize, maximumTitleSize);
+        var minimumScaledTitleSize = ScaledFont(minimumTitleSize);
+        var maximumTitleSize = ScaledFont(Math.Min(maximumCap, bounds.Width * widthScale));
+        var (titleText, titleSize) = FitText(title, layout.HeadingFont, FontWeights.ExtraBold, foreground, bounds.Width, titleHeight, alignment, minimumScaledTitleSize, maximumTitleSize);
         DrawOutlinedText(dc, titleText, new Point(bounds.X, y), palette.Outline, Math.Max(2.2, titleSize * .05));
         y += titleText.Height + Math.Max(18, titleSize * .28);
 
         if (!string.IsNullOrWhiteSpace(content.Subtitle))
         {
-            var (subtitle, _) = FitText(content.Subtitle.Trim(), "Bahnschrift", FontWeights.Normal, secondary, bounds.Width, bounds.Height * .22, alignment, 18, Math.Min(38, titleSize * .42));
+            var (subtitle, _) = FitText(content.Subtitle.Trim(), "Bahnschrift", FontWeights.Normal, secondary, bounds.Width, bounds.Height * .22, alignment, ScaledFont(18), ScaledFont(Math.Min(38, titleSize * .42)));
             DrawOutlinedText(dc, subtitle, new Point(bounds.X, y), palette.SecondaryOutline, Math.Max(1.2, titleSize * .02));
             y += subtitle.Height + 24;
         }
@@ -194,7 +196,7 @@ public sealed class PinRenderer
 
         if (!string.IsNullOrWhiteSpace(content.LinkLabel))
         {
-            DrawSimpleText(dc, content.LinkLabel, "Bahnschrift", FontWeights.SemiBold, 19, secondary, new Point(bounds.X, bounds.Bottom - 26), bounds.Width, alignment);
+            DrawSimpleText(dc, content.LinkLabel, "Bahnschrift", FontWeights.SemiBold, ScaledFont(19), secondary, new Point(bounds.X, bounds.Bottom - 26), bounds.Width, alignment);
         }
     }
 
@@ -223,7 +225,7 @@ public sealed class PinRenderer
 
     private static void DrawPill(DrawingContext dc, string value, LayoutDefinition layout, Rect bounds, double y, TextAlignment alignment)
     {
-        var text = Format(value.ToUpperInvariant(), "Bahnschrift", FontWeights.SemiBold, 19, Brushes.White, bounds.Width, TextAlignment.Left);
+        var text = Format(value.ToUpperInvariant(), "Bahnschrift", FontWeights.SemiBold, ScaledFont(19), Brushes.White, bounds.Width, TextAlignment.Left);
         var width = Math.Min(bounds.Width, text.Width + 52);
         var x = alignment switch
         {
@@ -239,7 +241,7 @@ public sealed class PinRenderer
 
     private static void DrawBadge(DrawingContext dc, string value, LayoutDefinition layout, Point anchor, TextAlignment alignment)
     {
-        var text = Format(value.ToUpperInvariant(), "Bahnschrift", FontWeights.Bold, 17, Brushes.White, 200, TextAlignment.Center);
+        var text = Format(value.ToUpperInvariant(), "Bahnschrift", FontWeights.Bold, ScaledFont(17), Brushes.White, 200, TextAlignment.Center);
         var width = Math.Max(72, text.Width + 32);
         var x = alignment == TextAlignment.Right ? anchor.X - width : anchor.X;
         if (alignment == TextAlignment.Center) x = anchor.X - width / 2;
@@ -257,6 +259,8 @@ public sealed class PinRenderer
             : OppositeOutline(fill.Color, size <= 22 ? (byte)90 : (byte)110);
         DrawOutlinedText(dc, formatted, point, outline, Math.Max(0.9, size * .03));
     }
+
+    private static double ScaledFont(double size) => size * FontScale;
 
     private static void DrawCover(DrawingContext dc, BitmapSource image, Rect target)
     {

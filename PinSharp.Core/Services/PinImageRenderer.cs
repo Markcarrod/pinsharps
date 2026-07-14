@@ -5,6 +5,8 @@ namespace PinSharp.Core.Services;
 
 public sealed class PinImageRenderer
 {
+    private const float HeadlineFontScale = 0.92f;
+
     public async Task RenderToFileAsync(
         string imagePath,
         string title,
@@ -101,6 +103,8 @@ public sealed class PinImageRenderer
             <= 12 => (56f, 170f),
             _ => (42f, 140f)
         };
+        minSize *= HeadlineFontScale;
+        maxSize *= HeadlineFontScale;
 
         var typeface = FontResolver.Resolve(layout.HeadingFont, layout.Bold, fontFilePath);
         var (paint, font, lines) = FitText(title, box, palette.Foreground, typeface, minSize, maxSize);
