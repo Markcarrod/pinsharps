@@ -10,7 +10,7 @@ namespace PinCreator.Services;
 public sealed class PinRenderer
 {
     private const double Dip = 1.0;
-    private const double FontScale = 0.92;
+    private const double FontScale = 0.80;
 
     public BitmapSource LoadImage(string path)
     {

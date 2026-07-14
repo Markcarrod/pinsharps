@@ -5,7 +5,7 @@ namespace PinSharp.Core.Services;
 
 public sealed class PinImageRenderer
 {
-    private const float HeadlineFontScale = 0.92f;
+    private const float HeadlineFontScale = 0.80f;
 
     public async Task RenderToFileAsync(
         string imagePath,
