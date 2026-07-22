@@ -126,7 +126,7 @@ public sealed class BatchRenderService
         {
             if (string.IsNullOrWhiteSpace(row.Title) || string.IsNullOrWhiteSpace(row.Code))
             {
-                throw new InvalidOperationException("Every input row must include both title and code.");
+                continue;
             }
 
             var baseCode = row.Code.Trim();

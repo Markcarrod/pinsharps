@@ -14,9 +14,19 @@ public static class TextBankParser
                 continue;
             }
 
+            if (!rawLine.Contains('|'))
+            {
+                continue;
+            }
+
             var parts = rawLine.Split('|', 2, StringSplitOptions.TrimEntries);
             var title = parts[0];
-            var code = parts.Length > 1 ? parts[1] : string.Empty;
+            var code = parts[1];
+            if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(code))
+            {
+                continue;
+            }
+
             rows.Add(new BatchInputRow(title, code));
         }
 
